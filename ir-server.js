@@ -1,6 +1,4 @@
-//console.log(process.argv);
-//const args = require('minimist')(process.argv.slice(2));
-//console.log(args)
+const { execSync } = require('child_process');
 
 function parseArgs() {
     const minimist = require('minimist');
@@ -37,77 +35,74 @@ function helpString() {
 }
 
 function parseConfig(configFile) {
-    const fs = require('fs')
+    const fs = require('fs');
     return JSON.parse(fs.readFileSync(configFile));
 }
 
-function initLogger(logConfig) {
-    const log4js = require('log4js')
-
-}
-
-function main() {
-    let args = parseArgs();
-    config = parseConfig(args.config);
-    console.log(config);
-
-    initLogger(config.log);
-    process.exit(0);
-}
-
-main();
-
-var http = require('http')
-const log4js = require('log4js')
-const { spawn, exec, execSync } = require('child_process')
-
-log4js.configure(
-    {
-        appenders: {
-            file: {
-            type: 'file',
-            filename: './logs/tv-ir.log',
-            maxLogSize: 1 * 1024 * 1024, // = 1Mb
-            numBackups: 3, // keep three backup files
+function initLogger(logConfig, logLevel) {
+    const log4js = require('log4js');
+    log4js.configure(
+        {
+            appenders: {
+                file: {
+                    type: 'file',
+                    filename: logConfig.logFile,
+                    maxLogSize: 1 * 1024 * 1024, // = 1Mb
+                    numBackups: 3, // keep three backup files
+                }
+            },
+            categories: {
+                default: { appenders: ['file'], level: logLevel }
             }
-        },
-        categories: {
-            default: { appenders: ['file'], level: 'info' }
         }
-    }
-)
-const logger = log4js.getLogger('tv')
-const PORT = 7467
+    );
+    global.logger = log4js.getLogger(logConfig.logCategory);
+}
 
-var server = http.createServer(onRequest)
-server.listen(PORT)
-logger.info("The TV IR controller has started")
+function runServer(port) {
+    const http = require('http');
+    const hostname = '127.0.0.1';
+    var server = http.createServer(onRequest);
+    server.listen(port);
+    logger.info(`IR controller has started. Server running at http://${hostname}:${port}/`);
+}
 
 function onRequest(request, response) {
-    logger.debug("Processing request:\n", request)
+    logger.debug("Processing request:\n", request);
     try {
-        var command = request.headers['ir-command']
-        var msg = 'irsend SEND_ONCE Samsung_BN59-01179A KEY_'.concat(command)
-        execmd(msg)
+        var command = request.headers['ir-command'];
+        var msg = 'irsend SEND_ONCE Samsung_BN59-01179A KEY_'.concat(command);
+        execmd(msg);
     }
     catch (error) {
-        logger.error(`"${error.message}" occured while processing:\n`, request)
+        logger.error(`"${error.message}" occured while processing:\n`, request);
     }
     finally {
-        logger.debug("Response:\n", response)
-        response.end()
+        logger.debug("Response:\n", response);
+        response.end();
     }
 }
 
 function execmd(command) {
-    logger.info("executing command: ".concat(command))
+    logger.info("executing command: ".concat(command));
     try {
-        //var stdout = execSync(command).toString()
+        var stdout = execSync(command).toString();
         if (stdout) {
-            logger.info(`stdout: ${stdout}`)
+            logger.info(`stdout: ${stdout}`);
         }
     }
     catch (error) {
-        logger.error(error.message)
+        logger.error(error.message);
     }
 }
+
+function main() {
+    const args = parseArgs();
+    config = parseConfig(args.config);
+    initLogger(config.log, args.verb);
+    logger.debug("Initiating server with arguments:\n", args);
+
+    runServer(config.port);
+}
+
+main();
