@@ -1,0 +1,10 @@
+{
+  "name": "ir-server",
+  "version": "1.0.0",
+  "author": "Weiqi Sun",
+  "scripts": {},
+  "dependencies": {
+    "log4js": ">=2.4.1"
+  },
+  "private": true
+}

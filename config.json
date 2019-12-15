@@ -1,0 +1,7 @@
+{
+    "log": {
+        "logFile": "./logs/ir-server.log",
+        "logCategory": "IR_SERVER"
+    },
+    "port": 7467
+}

@@ -71,7 +71,8 @@ function onRequest(request, response) {
     logger.debug("Processing request:\n", request);
     try {
         var command = request.headers['ir-command'];
-        var msg = 'irsend SEND_ONCE Samsung_BN59-01179A KEY_'.concat(command);
+        var remote = request.headers['remote-name'];
+        var msg = `irsend SEND_ONCE ${remote} KEY_${command}`;
         execmd(msg);
     }
     catch (error) {
