@@ -1,0 +1,37 @@
+#!/bin/bash
+
+TASK_PATH="/home/snflow/Smartthings/ir-server"
+
+PROGRAM="node"
+SCRIPT="ir-server.js"
+CONFIG="${TASK_PATH}/config.json"
+
+result=`ps aux | grep "${PROGRAM} ${SCRIPT}" | grep -v "grep" | wc -l`
+if [ $result -ge 1 ]
+    then
+        exit 0
+fi
+
+LOG_PATH="${TASK_PATH}/logs"
+LOG_NAME="err.log"
+ERR_LOG="${LOG_PATH}/${LOG_NAME}"
+
+numCrash=0
+maxCrash=20
+
+cd ${TASK_PATH}
+mkdir -p ${LOG_PATH}
+
+until ("${PROGRAM}" "${SCRIPT}" -c "${CONFIG}" 2>> "${ERR_LOG}"); do
+    rc=$?
+    sleep 1
+    echo -e "${SCRIPT} crashed with exit code $rc. Respawning..\n---$(date)---" >> ${ERR_LOG}
+    numCrash=$((numCrash + 1))
+    if (( numCrash >= maxCrash )); then
+        echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >> ${ERR_LOG}
+        echo "!!!!! Too many crashes. Exiting tplink_gateway.svc !!!!!" >> ${ERR_LOG}
+        echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" >> ${ERR_LOG}
+        exit 1
+    fi
+    echo "" >> ${ERR_LOG}
+done
