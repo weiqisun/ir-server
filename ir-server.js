@@ -74,6 +74,12 @@ function onRequest(request, response) {
         var remote = request.headers['remote-name'];
         var msg = `irsend SEND_ONCE ${remote} KEY_${command}`;
         execmd(msg);
+
+        // check if this command need to be repeated
+        var repeat = parseInt(request.headers.repeat, 10);
+        if (repeat > 1) {
+            repeatCmd(msg, repeat - 1);
+        }
     }
     catch (error) {
         logger.error(`"${error.message}" occured while processing:\n`, request);
@@ -95,6 +101,22 @@ function execmd(command) {
     catch (error) {
         logger.error(error.message);
     }
+}
+
+const sleepInterval = 0.5 // seconds
+async function repeatCmd(command, repeat){
+    logger.info(`repeating ${repeat} times of command ${command}`);
+    for (var i = 0; i < repeat; i++) {
+        logger.info(`repeat ${i + 1}/${repeat} times`);
+        await sleep(sleepInterval * 1000);
+        execmd(command);
+    }
+}
+
+function sleep(ms){
+    return new Promise(resolve=>{
+        setTimeout(resolve,ms)
+    })
 }
 
 function main() {
