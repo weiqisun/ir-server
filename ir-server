@@ -1,0 +1,49 @@
+#! /bin/sh
+# /etc/init.d/ir-server
+
+### BEGIN INIT INFO
+# Provides:          ir-server
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start ir-serverd at boot time
+# Description:       Run script from /home/snflow/Smartthings/ir-server/ir-serverd which will start / stop a program a boot / shutdown.
+### END INIT INFO
+
+# If you want a command to always run, put it here
+
+# Carry out specific functions when asked to by the system
+d_status() {
+    result=`ps aux | grep "node hs100.js" | grep -v "grep" | wc -l`
+    if [ $result -ge 1 ]; then
+        echo "hdmicecd is running"
+        exit 0
+    else
+        echo "hdmicecd is not running"
+        exit 3
+    fi
+}
+
+case "$1" in
+  start)
+    /home/snflow/bin/ir-serverd &
+    ;;
+  stop)
+    killall ir-serverd
+    pkill -f ir-server.js
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  status)
+    d_status
+    ;;
+  *)
+    echo "Usage: /etc/init.d/ir-server {start|stop|restart}" >&2
+    exit 1
+    ;;
+esac
+
+exit 0
