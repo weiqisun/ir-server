@@ -4,8 +4,7 @@
   "description": "A generic lirc server to handle any given irsend command with given remote name",
   "main": "ir-server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "preinstall": "npm install -g minimist"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
