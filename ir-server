@@ -8,19 +8,19 @@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Start ir-serverd at boot time
-# Description:       Run script from /home/snflow/Smartthings/ir-server/ir-serverd which will start / stop a program a boot / shutdown.
+# Description:       Run script from /home/snflow/bin/ir-serverd which will start / stop a program a boot / shutdown.
 ### END INIT INFO
 
 # If you want a command to always run, put it here
 
 # Carry out specific functions when asked to by the system
 d_status() {
-    result=`ps aux | grep "node hs100.js" | grep -v "grep" | wc -l`
+    result=`ps aux | grep "node ir-server.js" | grep -v "grep" | wc -l`
     if [ $result -ge 1 ]; then
-        echo "hdmicecd is running"
+        echo "ir-server is running"
         exit 0
     else
-        echo "hdmicecd is not running"
+        echo "ir-server is not running"
         exit 3
     fi
 }
