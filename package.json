@@ -1,10 +1,30 @@
 {
   "name": "ir-server",
   "version": "1.0.0",
-  "author": "Weiqi Sun",
-  "scripts": {},
-  "dependencies": {
-    "log4js": ">=2.4.1"
+  "description": "A generic lirc server to handle any given irsend command with given remote name",
+  "main": "ir-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "preinstall": "npm install -g minimist"
   },
-  "private": true
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weiqisun/ir-server.git"
+  },
+  "keywords": [
+    "lirc",
+    "server",
+    "irsend",
+    "remove"
+  ],
+  "author": "Weiqi Sun",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/weiqisun/ir-server/issues"
+  },
+  "homepage": "https://github.com/weiqisun/ir-server#readme",
+  "dependencies": {
+    "log4js": "^6.1.0",
+    "minimist": "^1.2.0"
+  }
 }
