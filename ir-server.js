@@ -72,7 +72,7 @@ function onRequest(request, response) {
     try {
         var command = request.headers['ir-command'];
         var remote = request.headers['remote-name'];
-        var msg = `irsend SEND_ONCE ${remote} KEY_${command}`;
+        var msg = `irsend SEND_ONCE ${remote} ${command}`;
         execmd(msg);
 
         // check if this command need to be repeated
