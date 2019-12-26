@@ -1,4 +1,4 @@
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 
 function parseArgs() {
     const minimist = require('minimist');
@@ -71,6 +71,20 @@ function onRequest(request, response) {
     logger.debug("Processing request:\n", request);
     try {
         var command = request.headers['ir-command'];
+        if (command == "on") {
+            power(POWER_ON);
+            return;
+        }
+        if (command == "off") {
+            power(POWER_OFF);
+            return;
+        }
+        if (command == "status") {
+            var ps = refresh();
+            response.setHeader("power-status", ps == POWER_ON ? "on" : "off");
+            return;
+        }
+
         var remote = request.headers['remote-name'];
         var msg = `irsend SEND_ONCE ${remote} ${command}`;
         execmd(msg);
@@ -97,9 +111,11 @@ function execmd(command) {
         if (stdout) {
             logger.info(`stdout: ${stdout}`);
         }
+        return {'isError': false, 'stdout': stdout};
     }
     catch (error) {
         logger.error(error.message);
+        return {'isError': true, 'errorMessage': error.message};
     }
 }
 
@@ -128,4 +144,62 @@ function main() {
     runServer(config.port);
 }
 
+const tvIp = "192.168.50.141";
+const tvPort = "7676";
+const POWER_ON = 1;
+const POWER_OFF = -1;
+const POWER_UNKNOWN = 0;
+function getStatus() {
+    let nmapCmd = `nmap --host-timeout 1 -p ${tvPort} ${tvIp}`;
+    let results = execmd(nmapCmd);
+
+    if (!results.isError) {
+        if (results.stdout == null) return POWER_UNKNOWN;
+        var arrayOfLines = results.stdout.match(/[^\r\n]+/g);
+        if (arrayOfLines.length < 1) return POWER_UNKNOWN;
+
+        var statusLine = arrayOfLines[arrayOfLines.length - 1];
+        if (statusLine.includes("(1 host up)")) {
+            return POWER_ON;
+        } else if (statusLine.includes("(0 hosts up)")) {
+            return POWER_OFF;
+        }
+    }
+    return POWER_UNKNOWN;
+}
+
+let powerStatus = POWER_UNKNOWN;
+function irw() {
+    logger.info("monitering ir commands");
+    let repeat = 5;
+    while (repeat > 0 && powerStatus == POWER_UNKNOWN) {
+        powerStatus = getStatus();
+        repeat = repeat - 1
+    }
+    if (powerStatus == POWER_UNKNOWN) throw "Can't get TV status, abort ir server";
+    logger.info(`power status starts with ${powerStatus}`);
+
+    var irw = exec('irw', function(error, stdout, stderr) {});
+    irw.stdout.on('data', function(data) {
+        var data = String(data);
+        if (data.includes("00 KEY_POWER Samsung_BN59-01179A")) {
+            powerStatus = powerStatus * -1;
+            logger.info(`changing power status to ${powerStatus}`);
+        }
+    });
+}
+
+function power(powerValue) {
+    if (refresh() != powerValue) {
+        var msg = "irsend SEND_ONCE Samsung_BN59-01179A KEY_POWER";
+        execmd(msg);
+    }
+}
+
+function refresh() {
+    powerStatus = getStatus();
+    return powerStatus;
+}
+
 main();
+irw();
