@@ -211,7 +211,7 @@ function refresh() {
 }
 
 function notifyPowerEvent(url, token, ps) {
-    logger.info("notifying power event: ", ps);
+    logger.info("notifying power event:", ps);
 
     let command = (ps == POWER_ON) ? "on" : "off"
     request(
