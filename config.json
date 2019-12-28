@@ -3,5 +3,10 @@
         "logFile": "./logs/ir-server.log",
         "logCategory": "IR_SERVER"
     },
-    "port": 7467
+    "port": 7467,
+    "remote": {
+        "name": "Samsung_BN59-01179A",
+        "powerKey": "KEY_POWER"
+    },
+    "credentials": "/home/snflow/.credentials/ir_power_sync.json"
 }

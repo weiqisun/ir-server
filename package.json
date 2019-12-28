@@ -24,6 +24,7 @@
   "homepage": "https://github.com/weiqisun/ir-server#readme",
   "dependencies": {
     "log4js": "^6.1.0",
-    "minimist": "^1.2.0"
+    "minimist": "^1.2.0",
+    "request": "^2.88.0"
   }
 }

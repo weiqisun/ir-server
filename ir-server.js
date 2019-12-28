@@ -1,4 +1,5 @@
 const { execSync, exec } = require('child_process');
+const request = require('request');
 
 function parseArgs() {
     const minimist = require('minimist');
@@ -36,7 +37,12 @@ function helpString() {
 
 function parseConfig(configFile) {
     const fs = require('fs');
-    return JSON.parse(fs.readFileSync(configFile));
+    let config = JSON.parse(fs.readFileSync(configFile));
+    global.remoteName = config.remote.name;
+    global.powerKey = config.remote.powerKey;
+
+    config.credentials = JSON.parse(fs.readFileSync(config.credentials));
+    return config;
 }
 
 function initLogger(logConfig, logLevel) {
@@ -57,6 +63,16 @@ function initLogger(logConfig, logLevel) {
         }
     );
     global.logger = log4js.getLogger(logConfig.logCategory);
+}
+
+function main() {
+    const args = parseArgs();
+    let config = parseConfig(args.config);
+    initLogger(config.log, args.verb);
+    logger.debug("Initiating server with arguments:\n", args);
+
+    runServer(config.port);
+    irw(config.credentials.url, config.credentials.token);
 }
 
 function runServer(port) {
@@ -135,15 +151,6 @@ function sleep(ms){
     })
 }
 
-function main() {
-    const args = parseArgs();
-    config = parseConfig(args.config);
-    initLogger(config.log, args.verb);
-    logger.debug("Initiating server with arguments:\n", args);
-
-    runServer(config.port);
-}
-
 const tvIp = "192.168.50.141";
 const tvPort = "7676";
 const POWER_ON = 1;
@@ -169,7 +176,7 @@ function getStatus() {
 }
 
 let powerStatus = POWER_UNKNOWN;
-function irw() {
+function irw(url, token) {
     logger.info("monitering ir commands");
     let repeat = 5;
     while (repeat > 0 && powerStatus == POWER_UNKNOWN) {
@@ -178,20 +185,22 @@ function irw() {
     }
     if (powerStatus == POWER_UNKNOWN) throw "Can't get TV status, abort ir server";
     logger.info(`power status starts with ${powerStatus}`);
+    notifyPowerEvent(url, token, powerStatus);
 
     var irw = exec('irw', function(error, stdout, stderr) {});
     irw.stdout.on('data', function(data) {
         var data = String(data);
-        if (data.includes("00 KEY_POWER Samsung_BN59-01179A")) {
+        if (data.includes(`00 ${powerKey} ${remoteName}`)) {
             powerStatus = powerStatus * -1;
             logger.info(`changing power status to ${powerStatus}`);
+            notifyPowerEvent(url, token, powerStatus);
         }
     });
 }
 
 function power(powerValue) {
     if (refresh() != powerValue) {
-        var msg = "irsend SEND_ONCE Samsung_BN59-01179A KEY_POWER";
+        var msg = `irsend SEND_ONCE ${remoteName} ${powerKey}`;
         execmd(msg);
     }
 }
@@ -201,5 +210,23 @@ function refresh() {
     return powerStatus;
 }
 
+function notifyPowerEvent(url, token, ps) {
+    logger.info("notifying power event: ", ps);
+
+    let command = (ps == POWER_ON) ? "on" : "off"
+    request(
+        {
+            url: `${url}/${command}`,
+            headers: { Authorization: `Bearer ${token}` }
+        },
+        function(err, res) {
+            if(err) {
+                logger.error(err);
+            } else {
+                logger.info(res.body);
+            }
+        }
+    );
+}
+
 main();
-irw();
