@@ -1,5 +1,6 @@
 const { execSync, exec } = require('child_process');
 const request = require('request');
+const http = require('http');
 
 function parseArgs() {
     const minimist = require('minimist');
@@ -40,6 +41,8 @@ function parseConfig(configFile) {
     let config = JSON.parse(fs.readFileSync(configFile));
     global.remoteName = config.remote.name;
     global.powerKey = config.remote.powerKey;
+    global.tvIp = config.tv.ip;
+    global.tvPort = config.tv.port;
 
     config.credentials = JSON.parse(fs.readFileSync(config.credentials));
     return config;
@@ -76,7 +79,6 @@ function main() {
 }
 
 function runServer(port) {
-    const http = require('http');
     const hostname = '127.0.0.1';
     var server = http.createServer(onRequest);
     server.listen(port);
@@ -151,8 +153,6 @@ function sleep(ms){
     })
 }
 
-const tvIp = "192.168.50.141";
-const tvPort = "7676";
 const POWER_ON = 1;
 const POWER_OFF = -1;
 const POWER_UNKNOWN = 0;

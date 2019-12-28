@@ -8,5 +8,9 @@
         "name": "Samsung_BN59-01179A",
         "powerKey": "KEY_POWER"
     },
+    "tv": {
+        "ip": "192.168.50.141",
+        "port": "7676"
+    },
     "credentials": "/home/snflow/.credentials/ir_power_sync.json"
 }
