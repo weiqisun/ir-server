@@ -85,6 +85,17 @@ function runServer(port) {
     logger.info(`IR controller has started. Server running at http://${hostname}:${port}/`);
 }
 
+const IF_TYPE = "if";
+const RF_TYPE = "rf";
+
+let SEND_COMMAND = {};
+SEND_COMMAND[IF_TYPE] = "/usr/bin/irsend";
+SEND_COMMAND[RF_TYPE] = "/usr/local/bin/rfsend";
+
+let SEND_OPTIONS = {};
+SEND_OPTIONS[IF_TYPE] = "SEND_ONCE";
+SEND_OPTIONS[RF_TYPE] = "";
+
 function onRequest(request, response) {
     logger.debug("Processing request:\n", request);
     try {
@@ -104,7 +115,8 @@ function onRequest(request, response) {
         }
 
         var remote = request.headers['remote-name'];
-        var msg = `irsend SEND_ONCE ${remote} ${command}`;
+        var remote_type = request.headers.hasOwnProperty('remote-type') ? request.headers['remote-type'] : IF_TYPE;
+        var msg = `${SEND_COMMAND[remote_type]} ${SEND_OPTIONS[remote_type]} ${remote} ${command}`;
         execmd(msg);
 
         // check if this command need to be repeated
